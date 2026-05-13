@@ -1,0 +1,205 @@
+# How to Use
+
+## Creating a component
+
+Every component starts with the builder. The recommended way is using `ComponentBuilder::make()` with a `ComponentEnum` case:
+
+```php
+use Juaniquillo\BackendComponents\Builders\ComponentBuilder;
+use Juaniquillo\BackendComponents\Enums\ComponentEnum;
+
+$button = ComponentBuilder::make(ComponentEnum::BUTTON);
+$div = ComponentBuilder::make(ComponentEnum::DIV);
+$paragraph = ComponentBuilder::make(ComponentEnum::PARAGRAPH);
+```
+
+You can also use the `MainBackendComponent` class directly:
+
+```php
+use Juaniquillo\BackendComponents\MainBackendComponent;
+
+$button = new MainBackendComponent('inline.button');
+$div = new MainBackendComponent('div');
+```
+
+## Setting content
+
+Use `setContent()` for a single item and `setContents()` for multiple items at once:
+
+```php
+$div = ComponentBuilder::make(ComponentEnum::DIV)
+    ->setContent('Hello')                               // appended (no key)
+    ->setContent('World', 'key_1')                      // appended with key
+    ->setContents([                                      // batch
+        'item_1' => ComponentBuilder::make(ComponentEnum::SPAN)->setContent('A'),
+        'item_2' => ComponentBuilder::make(ComponentEnum::SPAN)->setContent('B'),
+    ])
+    ->prependContent('First')                           // prepended (no key)
+    ->prependContent('Really First', 'key_0')           // prepended with key
+    ->unsetContent()                                     // clear all content
+    ->unsetContent('key_1');                             // remove by key
+```
+
+### Prepend and unset
+
+- `prependContent($content, $key = null)` — adds content at the beginning of the content array
+- `unsetContent($key = null)` — if a key is given, removes that specific item; otherwise clears all content
+
+### Accessing content
+
+```php
+$content = $component->getContent('key_1');   // single item by key
+$all = $component->getContents();              // full content array
+```
+
+## Setting attributes
+
+Use `setAttribute()` for a single attribute and `setAttributes()` for multiple at once:
+
+```php
+$div = ComponentBuilder::make(ComponentEnum::DIV)
+    ->setAttribute('id', 'my-id')
+    ->setAttribute('class', 'custom-class')
+    ->setAttributes(['data-foo' => 'bar', 'style' => 'display:none']);
+```
+
+## Composition (nesting)
+
+Components can be nested by passing them as content:
+
+```php
+$card = ComponentBuilder::make(ComponentEnum::DIV)
+    ->setAttribute('class', 'card')
+    ->setContent(
+        ComponentBuilder::make(ComponentEnum::H2)->setContent('Card Title')
+    )
+    ->setContent(
+        ComponentBuilder::make(ComponentEnum::PARAGRAPH)->setContent('Card body text')
+    )
+    ->setContent(
+        ComponentBuilder::make(ComponentEnum::BUTTON)
+            ->setContent('Read more')
+            ->setTheme('action', 'link')
+    );
+```
+
+## Individual components
+
+`DivComponent` is both a utility **and** a blueprint for creating new targeted component classes that bypass the enum/builder entirely. To create a new individual component, duplicate the `DivComponent` pattern:
+
+1. Put the class in `src/Components/Individual/`
+2. Implement `BackendComponent`, `IndividualComponent`, `ThemeComponent`, `Htmlable` (omit `ContentsComponent`+`HasContent` for self-closing elements)
+3. Use traits `IsBackendComponent`, `IsThemeable` (add `HasContent` only if the component can hold children)
+4. Define `getName()` to return the `ComponentEnum` value (or any dotted view path)
+5. Define `getComponentPath()` and `getPathOnly()` following the existing convention
+6. Wire up `getAttributeBag()`, `toHtml()`, `toArray()`, and a static `make()` factory
+7. Mark the class `final` (optional but recommended)
+
+```php
+use Juaniquillo\BackendComponents\Components\Individual\DivComponent;
+
+$div = new DivComponent;
+$div->setAttribute('class', 'my-class');
+$div->setContent('Hello');
+
+// Or via the static factory
+$div = DivComponent::make();
+```
+
+Currently only `DivComponent` exists in this category — add more as needed.
+
+## Settings
+
+Components accept a key-value settings bag, useful for passing configuration to custom components like `MODAL`:
+
+```php
+$component = ComponentBuilder::make(ComponentEnum::MODAL)
+    ->setSetting('transition', 'fade')
+    ->setSettings(['setting_1' => 'value_1', 'setting_2' => 'value_2']);
+
+$value = $component->getSetting('transition');
+
+$component->unsetSetting('setting_1');
+```
+
+## Slots
+
+Named slots are available for complex components. They are separate from content and rendered into designated parts of the template:
+
+```php
+$modal = ComponentBuilder::make(ComponentEnum::MODAL)
+    ->setSlot('title', ComponentBuilder::make(ComponentEnum::H2)->setContent('Modal Title'))
+    ->setSlot('button', ComponentBuilder::make(ComponentEnum::BUTTON)->setContent('Open'))
+    ->setSlot('footer', ComponentBuilder::make(ComponentEnum::DIV)->setContent('Footer'));
+```
+
+## Livewire
+
+Any component can be wrapped as a Livewire component:
+
+```php
+$livewire = ComponentBuilder::make(ComponentEnum::DIV)
+    ->setLivewire()
+    ->setLivewireKey('my-key')
+    ->setLivewireParams(['userId' => 1, 'team' => 'engineering']);
+```
+
+When rendered, Livewire components use `@livewire($name, $params, key($key))` instead of the standard Blade component path.
+
+## Table utilities
+
+`TableUtil` builds a complete `<table>` component tree from head and body arrays:
+
+```php
+use Juaniquillo\BackendComponents\Utils\TableUtil;
+use Juaniquillo\BackendComponents\Utils\CellBag;
+
+$table = TableUtil::make(
+    head: ['Name', 'Email', 'Role'],
+    body: [
+        [                         // plain values
+            'Alice',
+            'alice@example.com',
+            'Admin',
+        ],
+        [                         // CellBag for per-cell control
+            new CellBag(content: 'Bob', theme: ['color' => 'success']),
+            'bob@example.com',
+            'Editor',
+        ],
+    ],
+)
+    ->setCaption('Team members')
+    ->setTableThemes(['table' => 'table'])
+    ->setThThemes(['table' => ['th', 'th-dark']])
+    ->setTdThemes(['table' => ['td', 'td-dark']])
+    ->getComponent();
+```
+
+`CellBag` is a readonly value object that bundles content, optional per-cell theme overrides, and optional per-cell HTML attributes.
+
+## Serialization
+
+Export a component tree to an array and restore it later:
+
+```php
+use Juaniquillo\BackendComponents\Factories\ComponentFactory;
+
+// Serialize
+$array = $component->toArray();
+
+// Restore
+$restored = ComponentFactory::fromArray($array);
+```
+
+This works recursively for nested content, themes, settings, slots, custom paths, and Livewire state.
+
+## Rendering in Blade
+
+Components implement `Htmlable`, so you use `{{ $component }}` — never `{!! !!}` or `echo`:
+
+```blade
+{{ $card }}
+```
+
+The `__toString()` method returns a JSON representation (`component->toArray()` encoded), useful for debugging or API responses.
