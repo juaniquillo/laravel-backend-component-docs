@@ -1,0 +1,11 @@
+{
+    "name": "juaniquillo/laravel-backend-component-docs",
+    "authors": [
+        {
+            "name": "Victor Sánchez (Juaniquillo)",
+            "email": "juaniquillo@gmail.com"
+        }
+    ],
+    "license": "MIT",
+    "require": {}
+}
