@@ -60,7 +60,6 @@ For elements like `input`, `img`, and `col`, use `/>`:
 | `getAttributes()` | `array` | Merged server attributes + compiled theme classes |
 | `content` | `?ContentsComponent` | Processed content (renders child components) |
 | `path` | `?string` | Component view path |
-| `slots` | `array` | Named slots (for MODAL) |
 | `settings` | `array` | Key-value settings bag |
 | `isLivewire` | `bool` | Whether the component is Livewire |
 | `livewireKey` | `?string` | Livewire component key |

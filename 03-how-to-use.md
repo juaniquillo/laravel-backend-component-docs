@@ -30,10 +30,14 @@ Use `setContent()` for a single item and `setContents()` for multiple items at o
 $div = ComponentBuilder::make(ComponentEnum::DIV)
     ->setContent('Hello')                               // appended (no key)
     ->setContent('World', 'key_1')                      // appended with key
-    ->setContents([                                      // batch
+    ->setContents([                                      // batch (ignores keys)
+        ComponentBuilder::make(ComponentEnum::SPAN)->setContent('A'),
+        ComponentBuilder::make(ComponentEnum::SPAN)->setContent('B'),
+    ])
+    ->setContents([                                      // batch with keys (overwrites existing)
         'item_1' => ComponentBuilder::make(ComponentEnum::SPAN)->setContent('A'),
         'item_2' => ComponentBuilder::make(ComponentEnum::SPAN)->setContent('B'),
-    ])
+    ], overwrite: true)
     ->prependContent('First')                           // prepended (no key)
     ->prependContent('Really First', 'key_0')           // prepended with key
     ->unsetContent()                                     // clear all content
@@ -110,10 +114,10 @@ Currently only `DivComponent` exists in this category — add more as needed.
 
 ## Settings
 
-Components accept a key-value settings bag, useful for passing configuration to custom components like `MODAL`:
+Components accept a key-value settings bag, useful for passing configuration to custom components like `FORM`:
 
 ```php
-$component = ComponentBuilder::make(ComponentEnum::MODAL)
+$component = ComponentBuilder::make(ComponentEnum::DIV)
     ->setSetting('transition', 'fade')
     ->setSettings(['setting_1' => 'value_1', 'setting_2' => 'value_2']);
 
@@ -122,16 +126,37 @@ $value = $component->getSetting('transition');
 $component->unsetSetting('setting_1');
 ```
 
-## Slots
+## Modal utility
 
-Named slots are available for complex components. They are separate from content and rendered into designated parts of the template:
+`ModalUtil` builds a complete modal component tree using Alpine.js for interactivity:
 
 ```php
-$modal = ComponentBuilder::make(ComponentEnum::MODAL)
-    ->setSlot('title', ComponentBuilder::make(ComponentEnum::H2)->setContent('Modal Title'))
-    ->setSlot('button', ComponentBuilder::make(ComponentEnum::BUTTON)->setContent('Open'))
-    ->setSlot('footer', ComponentBuilder::make(ComponentEnum::DIV)->setContent('Footer'));
+use Juaniquillo\BackendComponents\Utils\ModalUtil;
+
+$modal = ModalUtil::make(
+    content: 'Hello World',
+    button: ComponentBuilder::make(ComponentEnum::BUTTON)
+        ->setContent('Open')
+        ->setAttribute('@click', 'showModal = true'),
+    title: ComponentBuilder::make(ComponentEnum::H2)->setContent('Modal Title'),
+    footer: ComponentBuilder::make(ComponentEnum::DIV)->setContent('Footer'),
+)
+    ->setAttribute('id', 'my-modal')
+    ->setTheme('modal', 'lg')
+    ->getComponent();
 ```
+
+The modal is composed from `DIV` components with Alpine.js attributes — no separate blade template needed.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `content` | `string\|int\|CompoundComponent` | Main body content (required) |
+| `button` | `?CompoundComponent` | Trigger button (optional) |
+| `title` | `?CompoundComponent` | Title section (optional) |
+| `footer` | `?CompoundComponent` | Footer section (optional) |
+| `overlay` | `?CompoundComponent` | Overlay element (defaults to themed overlay) |
+
+Methods `setAttribute()`, `setAttributes()`, `setTheme()`, and `setThemes()` configure the inner content container.
 
 ## Livewire
 
@@ -192,7 +217,7 @@ $array = $component->toArray();
 $restored = ComponentFactory::fromArray($array);
 ```
 
-This works recursively for nested content, themes, settings, slots, custom paths, and Livewire state.
+This works recursively for nested content, themes, settings, custom paths, and Livewire state.
 
 ## Rendering in Blade
 

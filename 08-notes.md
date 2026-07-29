@@ -2,19 +2,18 @@
 
 ## Architecture
 
-The package follows a **trait-per-concern** pattern. `MainBackendComponent` composes 6 traits, each responsible for a single aspect:
+The package follows a **trait-per-concern** pattern. `MainBackendComponent` composes 5 traits, each responsible for a single aspect:
 
 | Trait | Purpose |
 |---|---|
-| `HasContent` | Content array management (`setContent`, `setContents`, `prependContent`, `unsetContent`) |
+| `HasContent` | Content array management (`setContent`, `setContents($overwrite)`, `prependContent`, `unsetContent`) |
 | `HasPath` | View namespace and component path resolution (`getName`, `useLocal`, `getComponentPath`) |
 | `HasSettings` | Key-value settings bag (`setSetting`, `getSetting`, `setSettings`, `unsetSetting`) |
-| `HasSlots` | Named slots for complex compositions (`setSlot`, `getSlot`, `setSlots`) |
 | `IsBackendComponent` | HTML attributes (`setAttribute`, `setAttributes`, `getAttributes`) |
 | `IsThemeable` | Theme management (`setTheme`, `setThemes`, `getTheme`, `compileTheme`) |
 | `IsLivewireComponent` | Livewire integration (`setLivewire`, `setLivewireKey`, `setLivewireParams`) |
 
-Plus a `isFactory` trait on `ComponentFactory` for deserialization from arrays.
+Plus an `isFactory` trait on `ComponentFactory` for deserialization from arrays.
 
 ## Code style conventions
 

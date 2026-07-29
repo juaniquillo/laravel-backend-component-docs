@@ -55,7 +55,6 @@
 | **Details** | `DETAILS` | `details.details` |
 | | `SUMMARY` | `details.summary` |
 | **Layers** | `DIALOG` | `layers.dialog` |
-| **Custom** | `MODAL` | `custom.modal` |
 
 ## Builders
 
