@@ -22,6 +22,14 @@ $button = new MainBackendComponent('inline.button');
 $div = new MainBackendComponent('div');
 ```
 
+The second parameter accepts a `ThemeManager` instance to control where theme files are loaded from. The default uses the package's own `resources/views/_themes/tailwind/` directory; pass a `LocalThemeManager` to resolve themes from the application's `resources/views/` instead:
+
+```php
+use Juaniquillo\BackendComponents\Themes\LocalThemeManager;
+
+$div = new MainBackendComponent('div', new LocalThemeManager);
+```
+
 ## Setting content
 
 Use `setContent()` for a single item and `setContents()` for multiple items at once:
@@ -157,6 +165,19 @@ The modal is composed from `DIV` components with Alpine.js attributes — no sep
 | `overlay` | `?CompoundComponent` | Overlay element (defaults to themed overlay) |
 
 Methods `setAttribute()`, `setAttributes()`, `setTheme()`, and `setThemes()` configure the inner content container.
+
+## Theme resolution
+
+All entry points (`ComponentBuilder::make()`, `new MainBackendComponent()`, `ModalUtil::make()`, `TableUtil::make()`) accept an optional `ThemeManager` instance that controls where theme files are loaded from.
+
+| Builder / Constructor | Default | App-local alternative |
+|---|---|---|
+| `ComponentBuilder::make($enum)` | Package themes | `->useLocal()` or pass `LocalThemeManager` |
+| `new MainBackendComponent($name)` | Package themes | `new MainBackendComponent($name, new LocalThemeManager)` |
+| `ModalUtil::make(...)` | Package themes | `new LocalThemeManager` as `$themeManager` param |
+| `TableUtil::make(...)` | Package themes | `new LocalThemeManager` as `$themeManager` param |
+
+`LocalThemeManager` resolves theme files from the application's `resources/views/_themes/tailwind/` directory instead of the package's.
 
 ## Livewire
 
