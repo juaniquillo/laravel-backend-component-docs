@@ -10,9 +10,9 @@ Theme files live in `resources/views/_themes/tailwind/`. Each file returns a PHP
 
 ### Available themes
 
-The package ships with 22 theme files:
+The package ships with 27 theme files:
 
-`action`, `background`, `border`, `border-radius`, `box-shadow`, `color`, `cursor`, `display`, `flex`, `font`, `grid`, `inputs`, `line-height`, `lists`, `margin`, `modal`, `overflow`, `padding`, `position`, `size`, `table`, `text`
+`action`, `background`, `border`, `border-radius`, `box-shadow`, `color`, `cursor`, `display`, `flex`, `font`, `grid`, `inputs`, `line-height`, `lists`, `margin`, `max-width`, `modal`, `overflow`, `padding`, `position`, `ring`, `separator`, `size`, `table`, `text`, `transition`, `z-index`
 
 ### Theme file structure
 
@@ -70,6 +70,48 @@ $button = ComponentBuilder::make(ComponentEnum::BUTTON)
         'action' => 'success',
         'size' => 'lg',
     ]);
+```
+
+### Theme accumulation
+
+Themes accumulate by default — calling `setTheme` with the same name appends rather than replaces:
+
+```php
+$button = ComponentBuilder::make(ComponentEnum::BUTTON)
+    ->setTheme('action', 'success')
+    ->setTheme('action', 'error');
+
+// theme['action'] = ['success', 'error']
+```
+
+Duplicate values are automatically filtered:
+
+```php
+$button = ComponentBuilder::make(ComponentEnum::BUTTON)
+    ->setTheme('action', 'success')
+    ->setTheme('action', 'success');
+
+// theme['action'] = ['success'] — no duplicate
+```
+
+To replace a theme instead of accumulating, pass `overwrite: true`:
+
+```php
+$button = ComponentBuilder::make(ComponentEnum::BUTTON)
+    ->setTheme('action', 'success')
+    ->setTheme('action', 'error', overwrite: true);
+
+// theme['action'] = 'error' — replaced, not accumulated
+```
+
+The same applies to `setThemes`:
+
+```php
+$button = ComponentBuilder::make(ComponentEnum::BUTTON)
+    ->setTheme('action', 'success')
+    ->setThemes(['action' => 'error'], overwrite: true);
+
+// theme['action'] = 'error'
 ```
 
 ### Retrieving themes
