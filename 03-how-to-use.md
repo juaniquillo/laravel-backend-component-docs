@@ -240,6 +240,55 @@ $restored = ComponentFactory::fromArray($array);
 
 This works recursively for nested content, themes, settings, custom paths, and Livewire state.
 
+## Cached components
+
+`CachedBackendComponent` caches its rendered HTML output to disk. It implements the same interfaces as `MainBackendComponent` and adds caching via PSR-16 (`Psr\SimpleCache\CacheInterface`).
+
+```php
+use Juaniquillo\BackendComponents\Components\CachedBackendComponent;
+
+$button = new CachedBackendComponent(ComponentEnum::BUTTON);
+$html = $button->getCachedHtml();   // renders + caches on first call
+$html = $button->getCachedHtml();   // served from cache on subsequent calls
+$button->clearCache();              // invalidates the cached entry
+```
+
+The cache key is generated from `md5(json_encode($toArray()))` — same component state always produces the same key. Livewire components bypass caching automatically.
+
+### Cache configuration
+
+```php
+$component = new CachedBackendComponent(ComponentEnum::DIV);
+$component->setCacheDirectory('/custom/path'); // override default
+$component->disableCache();                    // bypass cache entirely
+$component->enableCache();                     // re-enable after disabling
+$component->isCacheEnabled();                  // check current state
+$component->getCacheKey();                     // get the md5 hash key
+```
+
+Default cache directory: `cache/backend-components/` in the project root.
+
+### Using the IsCachable trait directly
+
+Any component class can use the `IsCachable` trait for caching:
+
+```php
+use Juaniquillo\BackendComponents\Concerns\IsCachable;
+
+class MyCustomComponent implements BackendComponent {
+    use IsBackendComponent, IsCachable;
+    // ...
+}
+```
+
+### Swapping cache backends
+
+Since the trait type-hints `Psr\SimpleCache\CacheInterface`, you can inject any PSR-16 implementation (e.g., Laravel's cache store) without changing the component code.
+
+### When to cache
+
+Cache components that are expensive to render (complex nested trees, many theme compilations) and whose content doesn't change per-request — such as documentation pages, static navigation, footer blocks, or reusable layout sections. Avoid caching components with dynamic or user-specific content unless you handle invalidation.
+
 ## Rendering in Blade
 
 Components implement `Htmlable`, so you use `{{ $component }}` — never `{!! !!}` or `echo`:
